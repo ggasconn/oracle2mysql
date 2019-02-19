@@ -18,12 +18,12 @@ os
 sys
 getpass
 ```
-cx_Oracle can be installed via pip and the documentation is here: https://oracle.github.io/python-cx_Oracle/
-MySQLdb could be substituted with any fork or compatible connector. I used mysqlclient, also available through pip and the documentation can be found here: https://pypi.org/project/mysqlclient/
+- cx_Oracle can be installed via pip and the documentation is here: https://oracle.github.io/python-cx_Oracle/
+- MySQLdb could be substituted with any fork or compatible connector. I used mysqlclient, also available through pip and the documentation can be found here: https://pypi.org/project/mysqlclient/
 
 ## Use
 ```
-python3 oracle2mysql oracle2mysql_conf
+python3 oracle2mysql.py oracle2mysql_conf
 ```
 Executed without parameters returns the help
 
