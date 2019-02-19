@@ -70,7 +70,6 @@ def create_table(mysql, table, table_metadata):
         print ("Could not create table: %s\nERROR: %s" % (table, e))
 
 def migrate_data(oracle, mysql, table):
-
     oracle_cursor = oracle.cursor()
     mysql_cursor = mysql.cursor()
 
@@ -144,7 +143,6 @@ def migrate(oracle, mysql, tables):
 
 
 if __name__=="__main__":
-
     if len(sys.argv) < 2:
         print ("""Usage: oracle2mysql.py CONF_MODULE_NAME
 

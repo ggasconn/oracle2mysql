@@ -3,7 +3,7 @@ This is my fork for the helpful project that *codeforkjeff* did.
 https://github.com/codeforkjeff/oracle2mysql
 
 ## Changes
-Ordered from most important to less significant
+Sorted from most important to less significant
 - Migration from Python 2 to Python 3
 - Added function migrate_users
 - Ask for the MySQL data and Oracle service name.
