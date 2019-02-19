@@ -1,29 +1,30 @@
-# oracle2mysql
+# Oracle2MySQL
+This is my fork for the helpful project that *codeforkjeff* did.
+https://github.com/codeforkjeff/oracle2mysql
 
-Simple script to convert tables from Oracle to MySQL. This was created for the Schoenberg Database of Manuscripts project.
+## Changes
+Ordered from most important to less significant
+- Migration from Python 2 to Python 3
+- Added function migrate_users
+- Ask for the MySQL data and Oracle service name.
+- Handle a few errors with exceptions
+- Added a few prints for a more verbose execution
 
-## Installation
-
-You will need to install the following python packages:
-
+## Requirements
 ```
-MySQLdb 
-cx_Oracle
+cx_oracle
+MySQLdb
+os
+sys
+getpass
 ```
+cx_Oracle can be installed via pip and the documentation is here: https://oracle.github.io/python-cx_Oracle/
+MySQLdb could be substituted with any fork or compatible connector. I used mysqlclient, also available through pip and the documentation can be found here: https://pypi.org/project/mysqlclient/
 
-Note that finding the right
-[cx_Oracle](http://cx-oracle.sourceforge.net) package to use with your
-Oracle installation can be tricky. The SDBM dev environment, running
-on CentOS 5 and Python 2.6, uses cx_Oracle-5.1.2-10g-py26-1.x86_64.rpm.
-
-Edit the oracle2mysql_conf.py and specify the hostnames, accounts, and
-passwords for your two databases.
-
-## Running the script
-
+## Use
 ```
-python oracle2mysql.py oracle2mysql_conf
+python3 oracle2mysql oracle2mysql_conf
 ```
+Executed without parameters returns the help
 
-For help, run the script without any arguments.
-
+Hope you find it helpful and big thanks another time to *codeforkjeff* for his work!

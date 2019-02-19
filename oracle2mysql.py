@@ -1,22 +1,12 @@
-
-"""
-
-Quick and dirty script to migrate tables from Oracle to MySQL
-
-Information on using cx_Oracle can be found here:
-
-http://www.oracle.com/technetwork/articles/dsl/prez-python-queries-101587.html
-
-"""
-
 import os
-# need to set this, or Oracle won't retrieve utf8 chars properly
-os.environ["NLS_LANG"]='AMERICAN_AMERICA.AL32UTF8'
 import sys
-
 import cx_Oracle
 import MySQLdb
 
+from MySQLdb import ProgrammingError, OperationalError
+
+# need to set this, or Oracle won't retrieve utf8 chars properly
+os.environ["NLS_LANG"]='AMERICAN_AMERICA.AL32UTF8'
 
 def get_table_metadata(cursor):
     table_metadata = []
@@ -71,20 +61,24 @@ def create_table(mysql, table, table_metadata):
 
     sql += ") DEFAULT CHARACTER SET = utf8;"
 
-    #print sql
-    #print
+    #print (sql)
     cursor = mysql.cursor()
-    cursor.execute(sql)
 
+    try:
+        cursor.execute(sql)
+    except ProgrammingError as e:
+        print ("Could not create table: %s\nERROR: %s" % (table, e))
 
 def migrate_data(oracle, mysql, table):
 
     oracle_cursor = oracle.cursor()
+    mysql_cursor = mysql.cursor()
 
     # cursor.rowcount is supposed to contain # of records in query but
     # that doesn't seem to work for oracle, so we do SELECT count(*)
     # instead.
-    oracle_cursor.execute("SELECT count(*) FROM %s" % (table,))
+    sql = "SELECT count(*) FROM %s" % (table,)
+    oracle_cursor.execute(sql)
 
     total_rows = oracle_cursor.fetchone()[0]
 
@@ -94,7 +88,7 @@ def migrate_data(oracle, mysql, table):
 
     create_table(mysql, table, table_metadata)
 
-    for x in xrange(total_rows):
+    for x in range(total_rows):
         # TODO: should probably use fetchmany() and transactions to speed things up
         row = oracle_cursor.fetchone()
 
@@ -113,21 +107,46 @@ def migrate_data(oracle, mysql, table):
         sql_insert = "INSERT INTO %s (%s) VALUES (%s)" % \
                      (table, ",".join(column_names), question_marks)
 
-        mysql_cursor = mysql.cursor()
         mysql_cursor.execute(sql_insert, column_values)
+
+def migrate_users(oracle, mysql):
+    oracle_cursor = oracle.cursor()
+    mysql_cursor = mysql.cursor()
+
+    getUsersNumber = "SELECT count(*) FROM dba_users WHERE account_status = 'OPEN'"
+    oracle_cursor.execute(getUsersNumber)
+
+    total_rows = oracle_cursor.fetchone()[0]
+
+    getUsersName = "SELECT username FROM dba_users WHERE account_status = 'OPEN'"
+    oracle_cursor.execute(getUsersName)
+
+    for x in range(total_rows):
+        row = oracle_cursor.fetchone()
+        username = row[0]
+        createUser = "CREATE USER %s" % (username,)
+        try:
+            print("Creating user %s..." % (username,))
+            mysql_cursor.execute(createUser)
+        except OperationalError as e:
+            print("\nERROR: %s\nMaybe the user already exists" % (e,))
+
 
 
 def migrate(oracle, mysql, tables):
+    #Migrate users with OPEN status
+    migrate_users(oracle, mysql)
 
     for table in tables:
-        print "Doing %s" % (table,)
+        print ("\nCreating table %s..." % (table,))
         migrate_data(oracle, mysql, table)
+        print("Table %s migrated successfully....OK" % (table,))
 
 
 if __name__=="__main__":
 
     if len(sys.argv) < 2:
-        print """Usage: oracle2mysql.py CONF_MODULE_NAME
+        print ("""Usage: oracle2mysql.py CONF_MODULE_NAME
 
 where CONFIG_MODULE is the name of a python module that defines 3 variables:
   oracle = a cx_Oracle connection object instance, to use for source
@@ -138,22 +157,24 @@ Example:
 
 # python oracle2mysql.py oracle2mysql_conf
 
-"""
+""")
         sys.exit(0)
 
     conf_module_name = sys.argv[1]
     try:
         conf_module = __import__(conf_module_name)
-    except ImportError, e:
-        print "ERROR: Could not find config module: %s" % (conf_module_name,)
+    except ImportError as e:
+        print ("""ERROR: Could not find config module: %s
+                   Check if you wrote the module name ending with '.py'""" % (conf_module_name,))
         sys.exit(1)
 
     try:
         oracle = conf_module.oracle
         mysql = conf_module.mysql
-        tables = conf_module.tables
-    except AttributeError, e:
-        print e
+        tables = tuple()
+        tables = tables + conf_module.tables
+    except AttributeError as e:
+        print (e)
         sys.exit(1)
 
     migrate(oracle, mysql, tables)
